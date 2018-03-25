@@ -1,9 +1,16 @@
 package practice.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 import javax.validation.constraints.Size;
 
 import practice.dto.MemberDto;
@@ -25,6 +32,10 @@ public class Member {
 	@Size(min = 6, max = 50)
 	@Column(unique = true, nullable = false, length = 50)
 	private String email;
+	
+	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
+	@JoinColumn(name="member")
+	private List<MemberRole> roles = new ArrayList<>();
 
 	public Member() {
 	}
@@ -57,6 +68,26 @@ public class Member {
 
 	public MemberDto toMemberDto() {
 		return new MemberDto(memberId, password, email);
+	}
+
+	public String getMemberId() {
+		return memberId;
+	}
+
+	public String getPassword() {
+		return this.password;
+	}
+	
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public List<MemberRole> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(List<MemberRole> roles) {
+		this.roles = roles;
 	}
 
 	@Override

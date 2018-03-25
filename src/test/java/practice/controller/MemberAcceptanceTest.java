@@ -24,7 +24,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import practice.UnAuthenticationException;
 import practice.repository.MemberRepository;
 
 @RunWith(SpringRunner.class)
@@ -54,8 +53,8 @@ public class MemberAcceptanceTest {
 
 	@Test
 	public void 가입_성공() throws Exception {
-		HttpEntity<MultiValueMap<String, Object>> request = request(headers(), userParam("id1", "password", "testUser@email.com"));
-		ResponseEntity<String> response = createTemplate("/users/create", request, String.class);
+		HttpEntity<MultiValueMap<String, Object>> request = request(headers(), createParam("ididid", "password", "testUser@email.com"));
+		ResponseEntity<String> response = createResponse("/users/create", request, String.class);
 		
 		assertThat(response.getStatusCode(), is(HttpStatus.FOUND));
 		assertThat(response.getHeaders().getLocation().getPath(), is("/"));
@@ -63,25 +62,31 @@ public class MemberAcceptanceTest {
 
 	@Test
 	public void 로그인_성공() throws Exception {
-		HttpEntity<MultiValueMap<String, Object>> request = request(headers(), userParam("id1", "password", ""));
-		ResponseEntity<String> response = createTemplate("/users/login", request, String.class);
+		HttpEntity<MultiValueMap<String, Object>> request = request(headers(), loginParam("id1", "password", ""));
+		ResponseEntity<String> response = createResponse("/users/login", request, String.class);
 
 		assertThat(response.getStatusCode(), is(HttpStatus.FOUND));
-		assertTrue(response.getHeaders().getLocation().getPath().contains("/;jsessionid="));
 	}
 	
-	public void 로그인_실패() {
-		HttpEntity<MultiValueMap<String, Object>> request = request(headers(), userParam("id1", "password22", ""));
-		ResponseEntity<String> response = createTemplate("/users/login", request, String.class);
-
+	@Test
+	public void 유저목록() {
+		ResponseEntity<String> response = template.withBasicAuth("id1", "password")
+															.getForEntity("/users/list", String.class);
+		log.debug("body : {}", response.getBody());
 		assertThat(response.getStatusCode(), is(HttpStatus.OK));
-		assertTrue(response.getBody().contains("틀렸습니다"));
-		fail();
 	}
 	
-	private ResponseEntity<String> createTemplate(String url, HttpEntity<MultiValueMap<String, Object>> request, Class clazz) {
-		ResponseEntity<String> response = template.postForEntity(url, request, clazz);
-		return response;
+	@Test
+	public void 로그인_실패() {
+		HttpEntity<MultiValueMap<String, Object>> request = request(headers(), loginParam("id1", "password22", ""));
+		ResponseEntity<String> response = createResponse("/users/login", request, String.class);
+
+		assertThat(response.getStatusCode(), is(HttpStatus.FOUND));
+		assertThat(response.getHeaders().getLocation().getPath(), is("/users/login"));
+	}
+	
+	private ResponseEntity<String> createResponse(String url, HttpEntity<MultiValueMap<String, Object>> request, Class clazz) {
+		return template.postForEntity(url, request, clazz);
 	}
 
 	private HttpEntity<MultiValueMap<String, Object>> request(HttpHeaders headers,
@@ -98,7 +103,15 @@ public class MemberAcceptanceTest {
 		return headers;
 	}
 
-	private MultiValueMap<String, Object> userParam(String memberId, String password, String email) {
+	private MultiValueMap<String, Object> loginParam(String memberId, String password, String email) {
+		MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
+		params.add("username", memberId);
+		params.add("password", password);
+		params.add("email", email);
+		return params;
+	}
+	
+	private MultiValueMap<String, Object> createParam(String memberId, String password, String email) {
 		MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
 		params.add("memberId", memberId);
 		params.add("password", password);

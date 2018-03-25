@@ -1,6 +1,5 @@
 package practice.model;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
 import org.junit.Before;

@@ -5,11 +5,13 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.assertj.core.util.Lists;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import practice.UnAuthenticationException;
 import practice.dto.MemberDto;
 import practice.model.Member;
+import practice.model.MemberRole;
 import practice.repository.MemberRepository;
 
 @Service
@@ -18,16 +20,11 @@ public class MemberService {
 	@Resource(name ="memberRepository")
 	private MemberRepository memberRepository;
 	
-	public void create(Member user) {
-		memberRepository.save(user);
-	}
-	
-	public Member login(MemberDto user) throws UnAuthenticationException{
-		Member loginedMember = memberRepository.findByMemberId(user.getMemberId());
-		if(!loginedMember.login(user.toMember())) {
-			throw new UnAuthenticationException("아이디 혹은 비밀번호를 잘못 치셨습니다.");
-		}
-		return loginedMember;
+	public void create(Member member) {
+		BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+		member.setPassword(passwordEncoder.encode(member.getPassword()));
+		member.setRoles(Lists.newArrayList(new MemberRole(MemberRole.USER)));
+		memberRepository.save(member);
 	}
 
 	public List<MemberDto> allList() {
@@ -35,7 +32,7 @@ public class MemberService {
 	}
 
 	private List<MemberDto> toMemberDtoList(List<Member> members) {
-		List<MemberDto> memberDtos = new ArrayList();
+		List<MemberDto> memberDtos = new ArrayList<>();
 		for (Member member : members) {
 			memberDtos.add(member.toMemberDto());
 		}
